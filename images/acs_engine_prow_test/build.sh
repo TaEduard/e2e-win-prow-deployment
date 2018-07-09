@@ -16,7 +16,6 @@ GS_BUCKET=${GS_BUCKET:-"gs://e2e-win-acs-engine"}
 GS_BUCKET_FULL_PATH=${GS_BUCKET}/${REPO_NAME}_${REPO_OWNER}/${PULL_NUMBER}/${JOB_NAME}/${PROW_JOB_ID}/${BUILD_NUMBER}
 
 REPO=${REPO:-"http://github.com/Azure/acs-engine"}
-BRANCH=${BRANCH:-"master"}
 
 # Init gcloud
 
@@ -27,7 +26,16 @@ mkdir -p $ACS_DIR
 
 git clone $REPO $ACS_DIR
 cd $ACS_DIR
-git checkout master
+
+git checkout $PULL_BASE_REF -b  pull_base_ref
+
+if [[ $PULL_NUMBER != "" ]];then
+  git fetch --tags https://github.com/Azure/acs-engine master +refs/pull/$PULL_NUMBER/head:refs/pr/$PULL_NUMBER
+  git checkout refs/pr/$PULL_NUMBER -b test
+  #could do git merge instead of rebase
+  git rebase pull_base_ref
+fi
+
 
 # install glide
 go get github.com/Masterminds/glide
